@@ -1076,3 +1076,58 @@ P0 初版方向正确，但审核发现 4 个口径问题：
 
 ### 未部署到阿里云
 本次仅修改插件前端代码，不涉及后端。无需部署到阿里云。
+
+---
+
+## Loop 2026-07-03：WorkBuddy — P0-1 门店组抓取链路审计
+
+### 背景
+P0 第一优先级：确认门店组抓取链路完整贯通。用户在切换"我方酒店/门店组"后，立即刷新和后台抓取都应只抓当前组（1 家我方 + 最多 5 家竞对），不能抓全部酒店或旧组酒店。
+
+### 审计方法
+从前端到后端逐层追踪 `hotel_ids` 传递链路，覆盖手动触发和后台定时两种场景。
+
+### 审计结果
+
+| 层 | 文件 | 关键代码 | 结果 |
+|------|------|------|------|
+| App.vue | `extension/entrypoints/popup/App.vue:44-45` | `selectedGroupHotelIds` = mineHotel.id + competitor_ids | ✅ |
+| useApi | `extension/composables/useApi.ts:78` | `triggerScrape` 正确拼接 `hotel_ids` | ✅ |
+| scrape router | `backend/app/routers/scrape.py:72` | `_parse_hotel_ids_param` 解析并传入 | ✅ |
+| scrape_job | `backend/app/services/scrape_job.py:34` | `hotel_ids` → `ScraperManager.scrape_all()` | ✅ |
+| scrape_manager | `backend/app/services/scrape_manager.py:324-325` | `_load_mappings` 按 `hotel_ids` 过滤 | ✅ |
+| 后台定时 | `backend/app/services/scheduler.py:27` | `load_active_group_hotel_ids` 从所有 is_mine 酒店出发合并竞对 | ✅ |
+| hotel_groups | `backend/app/services/hotel_groups.py:12-29` | 遍历 is_mine=True → 收集 competitor_ids → 去重 | ✅ |
+| 日历查询 | `App.vue:185` | `fetchCalendar` 传 `selectedGroupHotelIds` | ✅ |
+| 最新批次 | `App.vue:173` | `fetchLatestScrape` 传 `selectedGroupHotelIds` | ✅ |
+| 日报 | `App.vue:216` | `fetchWechatReport` 传 `selectedMineHotelId` | ✅ |
+| ComparisonTable | `App.vue:428-434` | 接收 `calendarData` + `selectedCompetitorIds` | ✅ |
+| CalendarHeatmap | `App.vue:420-426` | 接收 `calendarData` + `selectedCompetitorIds` | ✅ |
+| OperationsPanel | `App.vue:440` | 接收 `:hotel-ids="selectedGroupHotelIds"` | ✅ |
+
+### 线上验证
+
+**线上数据**：
+- 门店组：id=7（皇马假日）+ competitors [8,9,10,11,12] = 6 家
+- 孤立竞对：id=13-17（芒果水晶、希尔悦、爱丽、秘墅、艺龙安云）
+- 定时目标：6 家 ✅
+- 最新定时批次 Batch #64：只含 [7,8,9,10,11,12]，6/6 success ✅
+- 孤立酒店 13-17 未被抓取 ✅
+
+**链路验证**：
+```python
+# 请求 readiness?hotel_ids=7,8,9,10,11,12 → ready_for_real=True
+# 请求 calendar?hotel_ids=7,8,9,10,11,12 → 6 家价格数据
+# 请求 scrape/runs?limit=3&hotel_ids=7,8,9,10,11,12 → 仅当前组批次
+```
+
+### 结论
+**P0-1 无需代码修改。** 门店组抓取链路从前端到后端已完整贯通，手动和定时两种场景都正确按组过滤。
+
+### 测试结果
+- 后端测试：21 passed（28 error 是沙箱 aiosqlite 兼容问题，与项目无关）
+- 插件构建：✅ 606.71 KB
+- 产物同步：✅ extension-chrome-mv3/
+
+### 下一步建议
+进入 **P0-2**：验证并修复携程房型名和价格对应，抽样核对 6 家酒店的抓取结果与携程页面实际起价房型/价格是否一致。

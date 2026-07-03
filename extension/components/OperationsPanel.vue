@@ -368,7 +368,7 @@ async function loadOperations() {
       scrapeRuns.value = runsResult.value;
       const latestRun = runsResult.value[0];
       const currentIds = new Set(props.hotelIds || []);
-      const taskEntries = await Promise.all(
+      const taskEntries: Array<readonly [number, ScrapeTaskResult[]]> = await Promise.all(
         runsResult.value.map(async (run) => {
           try {
             const tasks = await api.fetchScrapeTaskResults(run.id);
@@ -377,7 +377,7 @@ async function loadOperations() {
               : tasks;
             return [run.id, scopedTasks] as const;
           } catch {
-            return [run.id, []] as const;
+            return [run.id, [] as ScrapeTaskResult[]] as const;
           }
         })
       );
@@ -411,7 +411,7 @@ async function loadOperations() {
       );
 
       if (latestRun) {
-        taskResults.value = taskEntries.find(([runId]) => runId === latestRun.id)?.[1] || [];
+        taskResults.value = taskEntries.find(([runId]) => runId === latestRun.id)?.[1] ?? [];
         selectedEvidence.value = null;
       } else {
         taskResults.value = [];

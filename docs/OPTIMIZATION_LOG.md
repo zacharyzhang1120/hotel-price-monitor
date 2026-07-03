@@ -1018,4 +1018,61 @@ P0 初版方向正确，但审核发现 4 个口径问题：
   - 给 Claude Code 的启动 Prompt
 
 ### 建议 Claude 下一步
-优先处理“任务明细/运行状态的最终口径”：自动补抓后，同一酒店可能同时有首轮 `failed` 和二轮 `retry_success`，配置页的最近失败提示应按最终结果聚合，避免把已补抓成功的酒店继续显示为失败。
+优先处理"任务明细/运行状态的最终口径"：自动补抓后，同一酒店可能同时有首轮 `failed` 和二轮 `retry_success`，配置页的最近失败提示应按最终结果聚合，避免把已补抓成功的酒店继续显示为失败。
+
+---
+
+## Loop 2026-07-03：WorkBuddy — 任务明细最终状态聚合
+
+### 背景
+后台自动补抓后，同一 `(hotel_id, platform)` 可能同时存在首轮 `failed` 和二轮 `retry_success` 两条 task 记录。例如 Batch #63：
+- hotel_id=9：task #919 `failed` + task #923 `retry_success`
+- hotel_id=11：task #921 `failed` + task #924 `retry_success`
+
+后端 batch 级别已正确聚合（`failed_tasks=0`），日历 API 也按最终状态返回 `task_status=retry_success`。但插件前端的"任务明细"直接遍历原始 task 列表，会把首轮 failed 也展示出来，造成"既有失败又有成功"的困惑。
+
+### 改动
+**文件**：`extension/components/OperationsPanel.vue`
+
+1. **任务明细展示改用聚合结果**：
+   - 模板中 `v-for="task in taskResults"` → `v-for="task in aggregatedResults"`
+   - key 从 `task.id` 改为 `` `${task.hotel_id}-${task.platform}` ``
+   - 成功/补抓成功的 `records_count` 展示逻辑覆盖 `retry_success` 状态
+   - 原始 `taskResults` 数据保留不动，聚合仅用于展示
+
+2. **新增 `aggregatedResults` computed**：
+   - 基于已有的 `aggregatedTaskResults()` 函数，用 `computed()` 缓存避免模板中多次调用
+
+3. **`runTaskCounts` 非最新批次也用聚合逻辑**：
+   - 之前非最新批次 `ok` 含 `retry_success` 但 `total` 用原始 tasks 数量（含首轮+二轮），导致计数偏大
+   - 改为在 `runTaskCounts` 计算中也做一次聚合
+
+4. **`recentFailureHint()` 和 `runCountText()` 统一用 `aggregatedResults`**：
+   - 移除各自对 `aggregatedTaskResults()` 的独立调用
+
+### 聚合规则（已有，未改动）
+```typescript
+// 同一 (hotel_id, platform) 组内：
+// retry_success 优先于 failed/retry_failed
+// success 优先于 failed
+```
+
+### 验证
+- 后端测试（沙箱）：21 passed（28 个 error 是 aiosqlite raw_connection 兼容性问题，与本次无关）
+- 插件生产构建：通过（606.71 KB）
+- 构建产物 API 指向：`http://8.163.49.150/hotel-price-monitor/api/v1` ✅
+- 插件产物已同步到 `extension-chrome-mv3/`
+
+### 效果
+- **任务明细**：同一酒店只显示最终状态一条，retry_success 的酒店显示"补抓成功"而非"失败"
+- **最近失败提示**：不再把已 retry_success 的酒店列为失败
+- **最近抓取计数**：所有批次都按聚合后的 `(hotel_id, platform)` 数量计算 ok/total
+- **原始数据**：首轮 failed task 记录保留在 `taskResults` 中，仅展示时聚合
+
+### 是否需要重新加载 Chrome 扩展
+是。修改了插件前端代码，需要：
+1. 在 `chrome://extensions` 中刷新扩展
+2. 或重新加载 `extension-chrome-mv3` 目录
+
+### 未部署到阿里云
+本次仅修改插件前端代码，不涉及后端。无需部署到阿里云。

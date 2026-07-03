@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { API_BASE, useApi } from '../composables/useApi';
 import type { BackupItem, SchedulerStatus, ScrapeConfig, ScrapeReadiness, ScrapeRun, ScrapeTaskEvidence, ScrapeTaskResult } from '../types';
 import { writeClipboardText } from '../utils/clipboard';
@@ -61,6 +61,9 @@ function aggregatedTaskResults() {
   return Array.from(groups.values());
 }
 
+// Cached aggregated results for template — avoids re-running the grouping in multiple places
+const aggregatedResults = computed(() => aggregatedTaskResults());
+
 function realStatusText() {
   if (!readiness.value?.active_real_platforms.length) return '未启用';
   if (readiness.value.ready_for_real) return '就绪';
@@ -81,8 +84,7 @@ function readinessHint() {
 }
 
 function recentFailureHint() {
-  const aggregated = aggregatedTaskResults();
-  const failedTask = aggregated.find((task) => task.status !== 'success' && task.status !== 'retry_success');
+  const failedTask = aggregatedResults.value.find((task) => task.status !== 'success' && task.status !== 'retry_success');
   if (!failedTask) return '';
   const messageText = failedTask.error_message || '';
   if (/login|passport|登录|session/i.test(messageText)) {
@@ -178,9 +180,8 @@ function runCountText(run: ScrapeRun) {
   const scopedCount = runTaskCounts.value[run.id];
   if (scopedCount) return `${scopedCount.ok}/${scopedCount.total}`;
   if (scrapeRuns.value[0]?.id === run.id && taskResults.value.length) {
-    const aggregated = aggregatedTaskResults();
-    const ok = aggregated.filter((task) => task.status === 'success' || task.status === 'retry_success').length;
-    return `${ok}/${aggregated.length}`;
+    const ok = aggregatedResults.value.filter((task) => task.status === 'success' || task.status === 'retry_success').length;
+    return `${ok}/${aggregatedResults.value.length}`;
   }
   return `${run.success_tasks}/${run.total_tasks}`;
 }
@@ -384,13 +385,29 @@ async function loadOperations() {
       runTaskCounts.value = Object.fromEntries(
         taskEntries
           .filter(([, tasks]) => tasks.length)
-          .map(([runId, tasks]) => [
-            runId,
-            {
-              ok: tasks.filter((task) => task.status === 'success' || task.status === 'retry_success').length,
-              total: tasks.length
+          .map(([runId, tasks]) => {
+            // Aggregate by (hotel_id, platform) for correct ok/total counts
+            const groups = new Map<string, typeof tasks[number]>();
+            for (const task of tasks) {
+              const key = `${task.hotel_id}-${task.platform}`;
+              const existing = groups.get(key);
+              if (!existing) {
+                groups.set(key, task);
+              } else if (task.status === 'retry_success' && existing.status !== 'retry_success') {
+                groups.set(key, task);
+              } else if (task.status === 'success' && existing.status === 'failed') {
+                groups.set(key, task);
+              }
             }
-          ])
+            const aggregated = Array.from(groups.values());
+            return [
+              runId,
+              {
+                ok: aggregated.filter((task) => task.status === 'success' || task.status === 'retry_success').length,
+                total: aggregated.length
+              }
+            ];
+          })
       );
 
       if (latestRun) {
@@ -605,14 +622,14 @@ watch(
       </div>
 
       <div class="ops-subtitle">任务明细</div>
-      <div v-if="!taskResults.length" class="ops-empty">暂无任务明细</div>
-      <div v-for="task in taskResults" :key="task.id" class="task-result-item" :class="task.status">
+      <div v-if="!aggregatedResults.length" class="ops-empty">暂无任务明细</div>
+      <div v-for="task in aggregatedResults" :key="`${task.hotel_id}-${task.platform}`" class="task-result-item" :class="task.status">
         <div class="task-main">
           <span>{{ task.hotel_name }}</span>
           <strong>{{ taskStatusText(task.status) }} · {{ durationText(task.started_at, task.finished_at) }}</strong>
         </div>
         <div class="task-sub">
-          {{ task.status === 'success' ? `记录 ${task.records_count} 条` : (task.error_message || '抓取失败') }}
+          {{ task.status === 'success' || task.status === 'retry_success' ? `记录 ${task.records_count} 条` : (task.error_message || '抓取失败') }}
         </div>
         <button
           v-if="task.has_evidence"

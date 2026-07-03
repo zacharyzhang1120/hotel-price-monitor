@@ -1,0 +1,25 @@
+{
+  "name": "hotel-price-monitor-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "build:visible": "wxt build && rm -rf ../extension-chrome-mv3 && cp -R .output/chrome-mv3 ../extension-chrome-mv3",
+    "compile": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@wxt-dev/module-vue": "^1.0.2",
+    "echarts": "^5.6.0",
+    "vue": "^3.5.24",
+    "vue-echarts": "^7.0.3",
+    "wxt": "0.20.27"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.11",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.8"
+  }
+}

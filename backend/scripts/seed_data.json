@@ -1,0 +1,70 @@
+{
+  "my_hotel": {
+    "name": "皇马假日大酒店(海口骑楼老街省政府店)",
+    "distance_km": null,
+    "platforms": {
+      "ctrip": {
+        "hotel_id": "436575",
+        "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=436575&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a150748-495126-2941&detailFilters=17%7C1~17~1*31%7C436575~31~436575*80%7C2~80~2*29%7C1~29~1%7C1&display=incavg&subStamp=1440&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+        "room_name": "精选标准大床房「助眠床品·采光明亮·静谧空间」"
+      }
+    }
+  },
+  "competitors": [
+    {
+      "name": "美豪丽致酒店（海口骑楼老街省委省政府店）",
+      "distance_km": 1.3,
+      "platforms": {
+        "ctrip": {
+          "hotel_id": "132930201",
+          "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=132930201&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a6398c4-495126-34388&detailFilters=31%7C132930201~31~132930201*17%7C1~17~1*80%7C2~80~2*29%7C1~29~1%7C1&display=incavg&subStamp=1160&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+          "room_name": "雅致精选大床房【鲜储冰箱•65寸大屏幕】"
+        }
+      }
+    },
+    {
+      "name": "海口五指山国际温泉酒店(骑楼老街日月广场免税店)",
+      "distance_km": 0.8,
+      "platforms": {
+        "ctrip": {
+          "hotel_id": "36485202",
+          "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=36485202&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a14eb68-495126-39506&detailFilters=30%7C%E6%B5%B7%E5%8F%A3%E4%BA%94%E6%8C%87%E5%B1%B1%E5%9B%BD%E9%99%85%E6%B8%A9%E6%B3%89%E9%85%92%E5%BA%97(%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97%E6%97%A5%E6%9C%88%E5%B9%BF%E5%9C%BA%E5%85%8D%E7%A8%8E%E5%BA%97)~30~%E6%B5%B7%E5%8F%A3%E4%BA%94%E6%8C%87%E5%B1%B1%E5%9B%BD%E9%99%85%E6%B8%A9%E6%B3%89%E9%85%92%E5%BA%97(%E9%AA%91%E6%A5%BC%E8%80%81%E8%A1%97%E6%97%A5%E6%9C%88%E5%B9%BF%E5%9C%BA%E5%85%8D%E7%A8%8E%E5%BA%97)*17%7C1~17~1*80%7C2~80~2*29%7C1~29~1%7C1&hotelType=normal&display=incavg&subStamp=580&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+          "room_name": "影音大床房【天然淋浴温泉水+小冰箱】"
+        }
+      }
+    },
+    {
+      "name": "新海南大酒店(骑楼老街省政府店）",
+      "distance_km": 0.3,
+      "platforms": {
+        "ctrip": {
+          "hotel_id": "132539870",
+          "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=132539870&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a281ae0-495126-55197&detailFilters=31%7C132539870~31~132539870*17%7C1~17~1*80%7C2~80~2*29%7C1~29~1%7C1&display=incavg&subStamp=700&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+          "room_name": "智能高级大床房（睡眠零压床+全屋智能）"
+        }
+      }
+    },
+    {
+      "name": "海口鑫源温泉大酒店(骑楼老街日月广场免税店)",
+      "distance_km": 1.6,
+      "platforms": {
+        "ctrip": {
+          "hotel_id": "436559",
+          "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=436559&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a7de112-495126-57071&detailFilters=31%7C436559~31~436559*17%7C1~17~1*80%7C2~80~2*29%7C1~29~1%7C1&display=incavg&subStamp=1242&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+          "room_name": "贵宾双床房『天然温泉水淋浴•高空城景』"
+        }
+      }
+    },
+    {
+      "name": "全季酒店（海口海府路骑楼老街店）",
+      "distance_km": 0.8,
+      "platforms": {
+        "ctrip": {
+          "hotel_id": "120825712",
+          "url": "https://hotels.ctrip.com/hotels/detail/?cityEnName=Haikou&cityId=42&hotelId=120825712&checkIn=2026-06-26&checkOut=2026-06-27&adult=1&children=0&crn=1&ages=&curr=CNY&barcurr=CNY&masterhotelid_tracelogid=100053755-0a1489f8-495126-60239&detailFilters=31%7C120825712~31~120825712*17%7C1~17~1*80%7C2~80~2*29%7C1~29~1%7C1&display=incavg&subStamp=812&isCT=true&isFlexible=F&isFirstEnterDetail=T",
+          "room_name": "大床房"
+        }
+      }
+    }
+  ]
+}

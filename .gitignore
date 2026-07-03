@@ -1,0 +1,39 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Runtime data
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+data/*.db
+data/backups/
+data/ctrip_state.json
+data/debug_ctrip/
+backend/data/*.db
+backend/data/backups/
+backend/data/diag/
+*.pem
+*key*.pem
+
+# Node / WXT
+extension/node_modules/
+extension/.output/
+extension/.wxt/
+extension-chrome-mv3/
+.wxt/
+**/.wxt/
+
+# Logs
+*.log
+
+# Local diagnostics exports
+diagnostics/

@@ -1,0 +1,16 @@
+[Unit]
+Description=Hotel Price Monitor backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/hotel-price-monitor/backend
+EnvironmentFile=/opt/hotel-price-monitor/backend/.env
+ExecStart=/opt/hotel-price-monitor/backend/.venv/bin/python -m uvicorn app.main:app --host ${HOST} --port ${PORT}
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

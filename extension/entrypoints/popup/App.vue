@@ -208,6 +208,10 @@ function switchView(mode: 'monitor' | 'config' | 'insight') {
   menuOpen.value = false;
 }
 
+function selectMineHotel(hotelId: number) {
+  selectedMineHotelId.value = hotelId;
+}
+
 async function copyReport() {
   if (reportLabel.value !== '复制日报') return;
   reportLabel.value = '复制中';
@@ -436,7 +440,13 @@ onUnmounted(() => {
     </template>
 
     <div v-else-if="viewMode === 'config'" class="config-view">
-      <MappingConfigPanel :hotels="hotels" :date="today" :mine-hotel-id="selectedMineHotelId" @saved="loadAll" />
+      <MappingConfigPanel
+        :hotels="hotels"
+        :date="today"
+        :mine-hotel-id="selectedMineHotelId"
+        @saved="loadAll"
+        @select-mine="selectMineHotel"
+      />
       <OperationsPanel :hotel-ids="selectedGroupHotelIds" />
     </div>
 

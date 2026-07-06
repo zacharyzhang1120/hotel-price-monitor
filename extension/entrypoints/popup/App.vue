@@ -212,6 +212,14 @@ function selectMineHotel(hotelId: number) {
   selectedMineHotelId.value = hotelId;
 }
 
+async function handleConfigSaved(selectMineHotelId?: number) {
+  const targetMineHotelId = selectMineHotelId ?? selectedMineHotelId.value;
+  await loadAll();
+  if (targetMineHotelId && myHotels.value.some((hotel) => hotel.id === targetMineHotelId)) {
+    selectedMineHotelId.value = targetMineHotelId;
+  }
+}
+
 async function copyReport() {
   if (reportLabel.value !== '复制日报') return;
   reportLabel.value = '复制中';
@@ -447,7 +455,7 @@ onUnmounted(() => {
         :hotels="hotels"
         :date="today"
         :mine-hotel-id="selectedMineHotelId"
-        @saved="loadAll"
+        @saved="handleConfigSaved"
         @select-mine="selectMineHotel"
       />
     </div>

@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  saved: [];
+  saved: [selectMineHotelId?: number];
   selectMine: [hotelId: number];
 }>();
 
@@ -162,7 +162,7 @@ async function createMineGroup() {
     hotelId.value = hotel.id;
     message.value = '门店组已新增';
     emit('selectMine', hotel.id);
-    emit('saved');
+    emit('saved', hotel.id);
   } catch (error) {
     message.value = error instanceof Error ? error.message : '新增失败';
   } finally {
@@ -189,7 +189,7 @@ async function promoteExistingHotelToMine() {
     hotelId.value = targetId;
     message.value = '已设为我方门店组';
     emit('selectMine', targetId);
-    emit('saved');
+    emit('saved', targetId);
   } catch (error) {
     message.value = error instanceof Error ? error.message : '设置失败';
   } finally {

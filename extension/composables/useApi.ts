@@ -19,8 +19,21 @@ import type {
 
 export const API_BASE = (import.meta.env.VITE_API_BASE || 'http://localhost:8080/api/v1').replace(/\/$/, '');
 
+function networkErrorMessage(error: unknown) {
+  const rawMessage = error instanceof Error ? error.message : String(error || '');
+  const hint = API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')
+    ? '当前插件连接本地后端，请确认 8080 后端已启动，或重新加载指向阿里云的 extension-chrome-mv3。'
+    : '当前插件连接阿里云后端，请确认网络可访问，或检查扩展是否有该域名权限。';
+  return `无法连接后端：${API_BASE}。${hint}${rawMessage ? ` 原因：${rawMessage}` : ''}`;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, options);
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, options);
+  } catch (error) {
+    throw new Error(networkErrorMessage(error));
+  }
   if (!response.ok) {
     let message = `接口请求失败：${response.status}`;
     try {
@@ -35,7 +48,12 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 async function requestText(path: string, options?: RequestInit): Promise<string> {
-  const response = await fetch(`${API_BASE}${path}`, options);
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, options);
+  } catch (error) {
+    throw new Error(networkErrorMessage(error));
+  }
   if (!response.ok) {
     throw new Error(`接口请求失败：${response.status}`);
   }

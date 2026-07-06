@@ -24,6 +24,7 @@ const loadingEvidenceId = ref<number | null>(null);
 const selectedEvidence = ref<ScrapeTaskEvidence | null>(null);
 const message = ref('');
 const diagnosticLabel = ref('复制诊断');
+const detailsOpen = ref(false);
 
 const runStatusLabels: Record<string, string> = {
   success: '成功',
@@ -518,157 +519,166 @@ watch(
   <section class="operations-section">
     <div class="section-title">
       <span>运行状态</span>
-      <button class="ghost-button" :disabled="loading" @click="loadOperations">
-        {{ loading ? '刷新中' : '刷新' }}
-      </button>
+      <div class="ops-title-actions">
+        <button class="ghost-button" :disabled="loading" @click="loadOperations">
+          {{ loading ? '刷新中' : '刷新' }}
+        </button>
+        <button class="ghost-button" @click="detailsOpen = !detailsOpen">
+          {{ detailsOpen ? '收起' : '详情' }}
+        </button>
+      </div>
     </div>
 
     <div class="ops-body">
-      <div class="ops-row">
-        <span>定时</span>
-        <strong>{{ scheduler?.enabled ? '开启' : '关闭' }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>进程</span>
-        <strong>{{ scheduler?.running ? '运行中' : '未运行' }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>时间</span>
-        <strong>{{ scheduler?.schedule_hours?.length ? scheduler.schedule_hours.join(', ') : '-' }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>范围</span>
-        <strong>{{ scheduledScopeText() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>超时</span>
-        <strong>{{ timeoutText() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>补抓</span>
-        <strong>{{ scheduledRetryText() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>兜底</span>
-        <strong>{{ fallbackWindowText() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>目标</span>
-        <strong>{{ scheduler?.scheduled_target_hotel_count ?? '-' }} 家</strong>
-      </div>
-      <div class="ops-row">
-        <span>任务</span>
-        <strong>{{ scheduler?.jobs.length || 0 }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>下次</span>
-        <strong>{{ nextJobTime() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>后台</span>
-        <strong class="truncate-strong" :title="lastSchedulerEventText()">{{ lastSchedulerEventText() }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>健康</span>
-        <strong :class="schedulerHealthClass()">{{ schedulerHealthText() }}</strong>
+      <div class="ops-summary-grid">
+        <div class="ops-summary-item">
+          <span>定时健康</span>
+          <strong :class="schedulerHealthClass()">{{ schedulerHealthText() }}</strong>
+        </div>
+        <div class="ops-summary-item">
+          <span>下次</span>
+          <strong>{{ nextJobTime() }}</strong>
+        </div>
+        <div class="ops-summary-item">
+          <span>目标</span>
+          <strong>{{ scheduler?.scheduled_target_hotel_count ?? '-' }} 家</strong>
+        </div>
+        <div class="ops-summary-item">
+          <span>真实抓取</span>
+          <strong>{{ realStatusText() }}</strong>
+        </div>
+        <div class="ops-summary-item wide">
+          <span>携程登录</span>
+          <strong :class="{ 'text-green': readiness?.sessions?.find(s => s.platform === 'ctrip')?.has_session, 'text-red': !readiness?.sessions?.find(s => s.platform === 'ctrip')?.has_session }">
+            {{ ctripSessionStatus() }}
+          </strong>
+        </div>
       </div>
       <div v-if="schedulerHealthHint()" class="ops-hint warning">{{ schedulerHealthHint() }}</div>
-      <div class="ops-row">
-        <span>Mock</span>
-        <strong>{{ readiness?.ready_for_mock ? '就绪' : '待配置' }}</strong>
-      </div>
-      <div class="ops-row">
-        <span>真实</span>
-        <strong>{{ realStatusText() }}</strong>
-      </div>
-      <div class="ops-hint">{{ readinessHint() }}</div>
       <div v-if="recentFailureHint()" class="ops-hint warning">{{ recentFailureHint() }}</div>
-
-      <div class="ops-subtitle">携程登录</div>
-      <div class="ops-row">
-        <span>状态</span>
-        <strong :class="{ 'text-green': readiness?.sessions?.find(s => s.platform === 'ctrip')?.has_session, 'text-red': !readiness?.sessions?.find(s => s.platform === 'ctrip')?.has_session }">
-          {{ ctripSessionStatus() }}
-        </strong>
-      </div>
-      <div class="ops-actions" style="margin-top: 6px;">
+      <div class="ops-actions ops-compact-actions">
         <button class="primary-button backup-button" :disabled="loggingIn" @click="loginCtrip">
           {{ loggingIn ? '登录中...' : '打开携程登录' }}
-        </button>
-      </div>
-
-      <div class="ops-subtitle">最近备份</div>
-      <div v-if="!backups.length" class="ops-empty">暂无备份</div>
-      <div v-for="backup in backups" :key="backup.filename" class="backup-item">
-        <span>{{ formatTime(backup.created_at) }}</span>
-        <strong>{{ formatSize(backup.size_bytes) }}</strong>
-      </div>
-
-      <div class="ops-actions">
-        <button class="primary-button backup-button" :disabled="creating" @click="createBackup">
-          {{ creating ? '备份中' : '立即备份' }}
         </button>
         <button class="ghost-button backup-button" :disabled="copying" @click="copyDiagnostics">
           {{ diagnosticLabel }}
         </button>
       </div>
+      <div class="ops-message">{{ message }}</div>
 
-      <div class="ops-subtitle">最近抓取</div>
-      <div v-if="!scrapeRuns.length" class="ops-empty">暂无抓取记录</div>
-      <div v-for="run in scrapeRuns" :key="run.id" class="scrape-run-item" :class="run.status">
-        <span>#{{ run.id }} {{ triggerTypeText(run.trigger_type) }} {{ runStatusText(run.status) }}</span>
-        <strong>{{ runCountText(run) }}</strong>
-        <em>{{ runTimeText(run) }}</em>
-      </div>
+      <template v-if="detailsOpen">
+        <div class="ops-subtitle">定时任务</div>
+        <div class="ops-row">
+          <span>定时</span>
+          <strong>{{ scheduler?.enabled ? '开启' : '关闭' }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>进程</span>
+          <strong>{{ scheduler?.running ? '运行中' : '未运行' }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>时间</span>
+          <strong>{{ scheduler?.schedule_hours?.length ? scheduler.schedule_hours.join(', ') : '-' }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>范围</span>
+          <strong>{{ scheduledScopeText() }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>超时</span>
+          <strong>{{ timeoutText() }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>补抓</span>
+          <strong>{{ scheduledRetryText() }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>兜底</span>
+          <strong>{{ fallbackWindowText() }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>任务</span>
+          <strong>{{ scheduler?.jobs.length || 0 }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>后台</span>
+          <strong class="truncate-strong" :title="lastSchedulerEventText()">{{ lastSchedulerEventText() }}</strong>
+        </div>
+        <div class="ops-row">
+          <span>Mock</span>
+          <strong>{{ readiness?.ready_for_mock ? '就绪' : '待配置' }}</strong>
+        </div>
+        <div class="ops-hint">{{ readinessHint() }}</div>
 
-      <div class="ops-subtitle">任务明细</div>
-      <div v-if="!aggregatedResults.length" class="ops-empty">暂无任务明细</div>
-      <div v-for="task in aggregatedResults" :key="`${task.hotel_id}-${task.platform}`" class="task-result-item" :class="task.status">
-        <div class="task-main">
-          <span>{{ task.hotel_name }}</span>
-          <strong>{{ taskStatusText(task.status) }} · {{ durationText(task.started_at, task.finished_at) }}</strong>
+        <div class="ops-subtitle">最近备份</div>
+        <div v-if="!backups.length" class="ops-empty">暂无备份</div>
+        <div v-for="backup in backups" :key="backup.filename" class="backup-item">
+          <span>{{ formatTime(backup.created_at) }}</span>
+          <strong>{{ formatSize(backup.size_bytes) }}</strong>
         </div>
-        <div class="task-sub">
-          {{ task.status === 'success' || task.status === 'retry_success' ? `记录 ${task.records_count} 条` : (task.error_message || '抓取失败') }}
+
+        <div class="ops-actions">
+          <button class="primary-button backup-button" :disabled="creating" @click="createBackup">
+            {{ creating ? '备份中' : '立即备份' }}
+          </button>
         </div>
-        <button
-          v-if="task.has_evidence"
-          class="evidence-button"
-          :disabled="loadingEvidenceId === task.id"
-          @click="showEvidence(task)"
-        >
-          {{ loadingEvidenceId === task.id ? '加载中' : selectedEvidence?.id === task.id ? '收起证据' : '查看证据' }}
-        </button>
-        <div v-if="selectedEvidence?.id === task.id" class="evidence-panel">
-          <div class="evidence-row">
-            <span>选中</span>
-            <strong>{{ selectedRoomText() }}</strong>
+
+        <div class="ops-subtitle">最近抓取</div>
+        <div v-if="!scrapeRuns.length" class="ops-empty">暂无抓取记录</div>
+        <div v-for="run in scrapeRuns" :key="run.id" class="scrape-run-item" :class="run.status">
+          <span>#{{ run.id }} {{ triggerTypeText(run.trigger_type) }} {{ runStatusText(run.status) }}</span>
+          <strong>{{ runCountText(run) }}</strong>
+          <em>{{ runTimeText(run) }}</em>
+        </div>
+
+        <div class="ops-subtitle">任务明细</div>
+        <div v-if="!aggregatedResults.length" class="ops-empty">暂无任务明细</div>
+        <div v-for="task in aggregatedResults" :key="`${task.hotel_id}-${task.platform}`" class="task-result-item" :class="task.status">
+          <div class="task-main">
+            <span>{{ task.hotel_name }}</span>
+            <strong>{{ taskStatusText(task.status) }} · {{ durationText(task.started_at, task.finished_at) }}</strong>
           </div>
-          <div v-if="activePoint()?.check_in_date" class="evidence-row">
-            <span>日期</span>
-            <strong>{{ activePoint()?.check_in_date }}</strong>
+          <div class="task-sub">
+            {{ task.status === 'success' || task.status === 'retry_success' ? `记录 ${task.records_count} 条` : (task.error_message || '抓取失败') }}
           </div>
-          <div v-if="candidateItems().length" class="candidate-list">
-            <div v-for="candidate in candidateItems()" :key="`${candidate.room}-${candidate.price}`" class="candidate-item">
-              <span>{{ candidate.room || '-' }}</span>
-              <strong>¥{{ candidate.price ?? '-' }}</strong>
+          <button
+            v-if="task.has_evidence"
+            class="evidence-button"
+            :disabled="loadingEvidenceId === task.id"
+            @click="showEvidence(task)"
+          >
+            {{ loadingEvidenceId === task.id ? '加载中' : selectedEvidence?.id === task.id ? '收起证据' : '查看证据' }}
+          </button>
+          <div v-if="selectedEvidence?.id === task.id" class="evidence-panel">
+            <div class="evidence-row">
+              <span>选中</span>
+              <strong>{{ selectedRoomText() }}</strong>
+            </div>
+            <div v-if="activePoint()?.check_in_date" class="evidence-row">
+              <span>日期</span>
+              <strong>{{ activePoint()?.check_in_date }}</strong>
+            </div>
+            <div v-if="candidateItems().length" class="candidate-list">
+              <div v-for="candidate in candidateItems()" :key="`${candidate.room}-${candidate.price}`" class="candidate-item">
+                <span>{{ candidate.room || '-' }}</span>
+                <strong>¥{{ candidate.price ?? '-' }}</strong>
+              </div>
+            </div>
+            <div v-if="timingItems().length" class="timing-list">
+              {{ timingItems().join(' · ') }}
+            </div>
+            <div v-if="pageSignalText()" class="signal-list">
+              {{ pageSignalText() }}
+            </div>
+            <div v-if="evidenceErrorText()" class="evidence-error">
+              {{ evidenceErrorText() }}
+            </div>
+            <div v-if="bodyExcerptText()" class="body-excerpt">
+              {{ bodyExcerptText() }}
             </div>
           </div>
-          <div v-if="timingItems().length" class="timing-list">
-            {{ timingItems().join(' · ') }}
-          </div>
-          <div v-if="pageSignalText()" class="signal-list">
-            {{ pageSignalText() }}
-          </div>
-          <div v-if="evidenceErrorText()" class="evidence-error">
-            {{ evidenceErrorText() }}
-          </div>
-          <div v-if="bodyExcerptText()" class="body-excerpt">
-            {{ bodyExcerptText() }}
-          </div>
         </div>
-      </div>
-      <div class="ops-message">{{ message }}</div>
+      </template>
     </div>
   </section>
 </template>

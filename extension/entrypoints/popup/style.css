@@ -918,13 +918,73 @@ tr.mine td {
   min-height: 0;
 }
 
+.ops-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .ops-body {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding: 12px;
+  gap: 8px;
+  padding: 10px;
   max-height: 100%;
   overflow: auto;
+}
+
+.ops-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ops-summary-item {
+  min-width: 0;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid #edf1f6;
+  border-radius: 6px;
+  padding: 7px 8px;
+  background: #f8fafc;
+}
+
+.ops-summary-item.wide {
+  grid-column: 1 / -1;
+}
+
+.ops-summary-item span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.ops-summary-item strong {
+  min-width: 0;
+  color: #1f2933;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ops-summary-item strong.text-green {
+  color: #15803d;
+}
+
+.ops-summary-item strong.text-red {
+  color: #b42318;
+}
+
+.ops-summary-item strong.text-warning {
+  color: #b45309;
+}
+
+.ops-compact-actions {
+  margin-top: 2px;
 }
 
 .ops-row,

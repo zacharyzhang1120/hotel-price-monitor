@@ -25,7 +25,7 @@ const lastScrapeTime = ref<string | null>(null);
 const lastScrapeStatus = ref<string | null>(null);
 const lastScrapeTriggerType = ref<string | null>(null);
 const lastScrapeBatchId = ref<number | null>(null);
-const viewMode = ref<'monitor' | 'config' | 'insight'>('monitor');
+const viewMode = ref<'monitor' | 'config' | 'insight' | 'operations'>('monitor');
 const menuOpen = ref(false);
 const reportLabel = ref('复制日报');
 const refreshLabel = ref('立即刷新');
@@ -203,7 +203,7 @@ function ensureSelectedMineHotel() {
   selectedMineHotelId.value = myHotels.value[0].id;
 }
 
-function switchView(mode: 'monitor' | 'config' | 'insight') {
+function switchView(mode: 'monitor' | 'config' | 'insight' | 'operations') {
   viewMode.value = mode;
   menuOpen.value = false;
 }
@@ -399,6 +399,9 @@ onUnmounted(() => {
             <span v-if="refreshHint" class="refresh-hint">{{ refreshHint }}</span>
           </div>
         </div>
+        <button class="status-trigger" :class="{ active: viewMode === 'operations' }" @click="switchView('operations')">
+          运行状态
+        </button>
       </div>
     </header>
 
@@ -447,6 +450,9 @@ onUnmounted(() => {
         @saved="loadAll"
         @select-mine="selectMineHotel"
       />
+    </div>
+
+    <div v-else-if="viewMode === 'operations'" class="operations-view">
       <OperationsPanel :hotel-ids="selectedGroupHotelIds" />
     </div>
 

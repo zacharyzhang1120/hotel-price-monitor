@@ -160,7 +160,7 @@ async function createMineGroup() {
     });
     newMineHotelName.value = '';
     hotelId.value = hotel.id;
-    message.value = '门店组已新增';
+    message.value = `门店组已新增 #${hotel.id}`;
     emit('selectMine', hotel.id);
     emit('saved', hotel.id);
   } catch (error) {
@@ -187,7 +187,7 @@ async function promoteExistingHotelToMine() {
     );
     promoteHotelId.value = null;
     hotelId.value = targetId;
-    message.value = '已设为我方门店组';
+    message.value = `已设为我方门店组 #${targetId}`;
     emit('selectMine', targetId);
     emit('saved', targetId);
   } catch (error) {

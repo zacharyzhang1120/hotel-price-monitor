@@ -143,7 +143,7 @@ function buildFinalRefreshMessage(status: {
   return `抓取未完成${batch}：请在任务明细查看失败原因`;
 }
 
-async function loadAll() {
+async function loadAll(preferredMineHotelId?: number) {
   loading.value = true;
   error.value = null;
   try {
@@ -152,7 +152,7 @@ async function loadAll() {
     const hotelResult = await api.fetchHotels();
 
     hotels.value = hotelResult;
-    ensureSelectedMineHotel();
+    ensureSelectedMineHotel(preferredMineHotelId);
 
     await Promise.all([loadCalendarForCurrentGroup(), loadLatestForCurrentGroup()]);
   } catch (err) {
@@ -186,10 +186,14 @@ async function loadCalendarForCurrentGroup() {
   calendarData.value = calendar.data;
 }
 
-function ensureSelectedMineHotel() {
+function ensureSelectedMineHotel(preferredMineHotelId?: number) {
   if (!myHotels.value.length) {
     selectedMineHotelId.value = null;
     hotelFilter.value = null;
+    return;
+  }
+  if (preferredMineHotelId && myHotels.value.some((hotel) => hotel.id === preferredMineHotelId)) {
+    selectedMineHotelId.value = preferredMineHotelId;
     return;
   }
   if (selectedMineHotelId.value && myHotels.value.some((hotel) => hotel.id === selectedMineHotelId.value)) {
@@ -214,9 +218,10 @@ function selectMineHotel(hotelId: number) {
 
 async function handleConfigSaved(selectMineHotelId?: number) {
   const targetMineHotelId = selectMineHotelId ?? selectedMineHotelId.value;
-  await loadAll();
+  await loadAll(targetMineHotelId ?? undefined);
   if (targetMineHotelId && myHotels.value.some((hotel) => hotel.id === targetMineHotelId)) {
     selectedMineHotelId.value = targetMineHotelId;
+    refreshNotice.value = '门店组已更新，顶部下拉已切换到当前门店';
   }
 }
 

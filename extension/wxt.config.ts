@@ -20,7 +20,7 @@ export default defineConfig({
   manifest: {
     name: '酒店竞对价格监控',
     description: '酒店竞对价格巡检、今日对比和运营判断',
-    version: '0.1.0',
+    version: '0.1.1',
     permissions: ['storage', 'clipboardWrite'],
     host_permissions: hostPermissions,
     action: {
